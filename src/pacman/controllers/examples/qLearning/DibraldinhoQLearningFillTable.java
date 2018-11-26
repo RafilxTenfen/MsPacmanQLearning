@@ -65,7 +65,7 @@ public class DibraldinhoQLearningFillTable extends Controller<Constants.MOVE> {
         }
 
         return ((qntPills * Rewards.EAT_PILL) + (qntPowerPills * Rewards.EAT_POWER_PILL) +
-                (qntGhostEaten * Rewards.EAT_GHOST) + pacmanDistance);
+                (qntGhostEaten * Rewards.EAT_GHOST));
     }
 
 

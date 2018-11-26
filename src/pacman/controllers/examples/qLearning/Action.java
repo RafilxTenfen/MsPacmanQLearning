@@ -17,7 +17,7 @@ public class Action {
     public Action(Game game, GameUtils utils) {
         this.game = game;
         this.utils = utils;
-        this.myDM = Constants.DM.EUCLID;
+        this.myDM = Constants.DM.PATH;
     }
 
     public enum ACTION implements Serializable {
@@ -36,7 +36,7 @@ public class Action {
         for (Agent ghost: utils.getGhosts()) {
             for (int i: path) {
                 if (i != -1 && ghost.getIndex() != -1) {
-                    if (game.getEuclideanDistance(i, ghost.getIndex()) < SAFE_DISTANCE) {
+                    if (game.getShortestPathDistance(i, ghost.getIndex()) < SAFE_DISTANCE) {
                         return false;
                     }
                 }
@@ -50,18 +50,10 @@ public class Action {
         if (utils.getGhosts().size() > 0) {
             for (Agent ghost: utils.getGhosts()) {
                 if (ghost.getIndex() != -1 && utils.getPacmanNodeIndex() != -1) {
-                    if (ghost.getDistance() < (SAFE_DISTANCE / 2)) {
-                        return game.getNextMoveAwayFromTarget(utils.getPacmanNodeIndex(), ghost.getIndex(), Constants.DM.PATH);
+                    if (ghost.getDistance() < SAFE_DISTANCE) {
+                        return game.getNextMoveAwayFromTarget(utils.getPacmanNodeIndex(), ghost.getIndex(), myDM);
                     }
                 }
-            }
-        }
-
-        //Vai para a PowerPill (sem GHOSTS)
-        for (Agent powerPill: utils.getPowerPills()) {
-            int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade());
-            if (isPathSafe(path)) {
-                return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade(), myDM);
             }
         }
 
@@ -119,12 +111,6 @@ public class Action {
     }
 
     private Constants.MOVE explore() {
-        //Vai para Come um EdibleGhost (sem GHOSTS)(
-        Agent ghostEdible = isAnySafeGhostEdible();
-        if (ghostEdible != null) {
-            return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade(), myDM);
-        }
-
         // vai para a power pill mais distante do pacman segura (SEM GHOSTS)
         for (int i = utils.getPowerPills().size() - 1; i >= 0; i--) {
             Agent powerPill = utils.getPowerPills().get(Math.round(i / 8));
@@ -150,7 +136,7 @@ public class Action {
 
     public Agent isAnySafeGhostEdible() {
         for (Agent ghostEdible: utils.getGhostsEdible()) {
-            if (game.getEuclideanDistance(utils.getPacmanNodeIndex(), ghostEdible.getIndex()) < RADAR_GHOSTS) {
+            if (game.getShortestPathDistance(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade()) < RADAR_GHOSTS) {
                 int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade());
                 if (isPathSafe(path)) {
                     return ghostEdible;

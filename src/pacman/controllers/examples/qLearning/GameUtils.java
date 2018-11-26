@@ -37,12 +37,12 @@ public class GameUtils {
     private void populatePills() {
         for (int indice: game.getActivePowerPillsIndices()) {
             int index = game.getPowerPillIndex(indice);
-            powerPills.add(new Agent(indice, index, (int) game.getEuclideanDistance(pacmanNodeIndex, index)));
+            powerPills.add(new Agent(indice, index, game.getShortestPathDistance(pacmanNodeIndex, index)));
         }
 
         for (int indice: game.getActivePillsIndices()) {
             int index = game.getPillIndex(indice);
-            pills.add(new Agent(indice, index, (int) game.getEuclideanDistance(pacmanNodeIndex, index)));
+            pills.add(new Agent(indice, index, game.getShortestPathDistance(pacmanNodeIndex, index)));
         }
     }
 
@@ -60,9 +60,9 @@ public class GameUtils {
         for (Constants.GHOST ghostType: Constants.GHOST.values()) {
             int index = game.getGhostCurrentNodeIndex(ghostType);
             if (game.isGhostEdible(ghostType)) {
-                ghostsEdible.add(new Agent(indice, index, (int) game.getEuclideanDistance(pacmanNodeIndex, index)));
+                ghostsEdible.add(new Agent(indice, index, (int) game.getShortestPathDistance(pacmanNodeIndex, index)));
             } else {
-                ghosts.add(new Agent(indice, index, (int) game.getEuclideanDistance(pacmanNodeIndex, index)));
+                ghosts.add(new Agent(indice, index, (int) game.getShortestPathDistance(pacmanNodeIndex, index)));
             }
             indice++;
         }

@@ -90,7 +90,8 @@ public class Executor
 		int delay=10;
 		boolean visual=true;
 		int numTrials=100;
-		Params oParams = new Params(40);
+		//Params oParams = new Params(65);//
+		Params oParams = new Params(55);//
 
 		Executor exec = new Executor();
 		
@@ -126,6 +127,7 @@ public class Executor
 
 		Qtable filledTable = readQTable();
 		exec.runGame(new DibraldinhoQLearning(oParams, table), new StarterGhosts(), visual,delay);
+
 		/* run multiple games in batch mode - good for testing. */
 
 //		System.out.println("STARTER PACMAN vs LEGACY2THERECONING");
