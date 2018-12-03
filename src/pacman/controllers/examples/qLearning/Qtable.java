@@ -87,7 +87,7 @@ public class Qtable implements Serializable {
     }
 
     public Action.ACTION getActionMaxReward(State state) {
-        Action.ACTION myAct = Action.ACTION.RUN; //default
+        Action.ACTION myAct = Action.ACTION.randomAction(); //default
         int maxRewardItem = Integer.MIN_VALUE;
 
         for (State tableState: this.table.keySet()) {

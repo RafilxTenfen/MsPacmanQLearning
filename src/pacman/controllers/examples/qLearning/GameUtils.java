@@ -21,6 +21,8 @@ public class GameUtils {
 
     private ArrayList<Agent> ghostsEdible;
 
+    private ArrayList<Agent> gameJunctions;
+
     public GameUtils(Game game, Params params) {
         this.game = game;
         this.params = params;
@@ -29,9 +31,17 @@ public class GameUtils {
         this.powerPills = new ArrayList<>();
         this.ghosts = new ArrayList<>();
         this.ghostsEdible = new ArrayList<>();
+        this.gameJunctions = new ArrayList<>();
         this.populatePills();
+        this.populateJunctions();
         this.populateGhosts();
         this.orderAllByDistance();
+    }
+
+    private void populateJunctions() {
+        for (int i: game.getJunctionIndices()) {
+            this.gameJunctions.add(new Agent(i, i, game.getShortestPathDistance(pacmanNodeIndex, i)));
+        }
     }
 
     private void populatePills() {
@@ -49,6 +59,15 @@ public class GameUtils {
     public boolean isAgentsInRange(ArrayList<Agent> list) {
         for (Agent agent: list) {
             if (agent.getDistance() != -1 && agent.getDistance() <= this.params.getRange()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isAgentsInRangeIndex(ArrayList<Agent> list, int index) {
+        for (Agent agent: list) {
+            if (game.getShortestPathDistance(index, agent.getIndex()) <= this.params.getRange()) {
                 return true;
             }
         }
@@ -80,8 +99,18 @@ public class GameUtils {
         };
         this.pills.sort(oComparatorDistance);
         this.powerPills.sort(oComparatorDistance);
+        this.gameJunctions.sort(oComparatorDistance);
         this.ghosts.sort(oComparatorDistance);
         this.ghostsEdible.sort(oComparatorDistance);
+    }
+
+    public Agent getJunctionMove(Constants.MOVE move) {
+        for (Agent junction: this.getGameJunctions()) {
+            if (game.getNextMoveTowardsTarget(game.getPacmanCurrentNodeIndex(), junction.getIndex(), game.getPacmanLastMoveMade(), Constants.DM.PATH) == move) {
+                return  junction;
+            }
+        }
+        return this.getGameJunctions().get(1);
     }
 
     public ArrayList<Agent> getPills() {
@@ -98,6 +127,10 @@ public class GameUtils {
 
     public ArrayList<Agent> getGhostsEdible() {
         return ghostsEdible;
+    }
+
+    public ArrayList<Agent> getGameJunctions() {
+        return gameJunctions;
     }
 
     public int getPacmanNodeIndex() {

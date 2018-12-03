@@ -90,8 +90,10 @@ public class Executor
 		int delay=10;
 		boolean visual=true;
 		int numTrials=100;
-		//Params oParams = new Params(65);//
-		Params oParams = new Params(55);//
+		//Params oParams = new Params(60);//1200pt
+		Params oParams = new Params(80);//4000
+
+		//Params oParams = new Params(55);//
 
 		Executor exec = new Executor();
 		

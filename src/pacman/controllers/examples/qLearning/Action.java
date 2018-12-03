@@ -11,13 +11,17 @@ public class Action {
     private Game game;
     private GameUtils utils;
     private Constants.DM myDM;
-    private static final int SAFE_DISTANCE = 15;
-    private static final int RADAR_GHOSTS  = 100;
+    private static final int SAFE_DISTANCE  = 13;
+    private static final int RADAR_GHOSTS   = 120;
+    private static final int PILLS_DIVISOR  = 15;
+    public List<Constants.MOVE> listMove;
 
     public Action(Game game, GameUtils utils) {
         this.game = game;
         this.utils = utils;
         this.myDM = Constants.DM.PATH;
+        this.listMove = new ArrayList<>();
+        this.populateMoves();
     }
 
     public enum ACTION implements Serializable {
@@ -32,6 +36,19 @@ public class Action {
         }
     }
 
+    public void populateMoves() {
+        this.listMove.add(Constants.MOVE.UP);
+        this.listMove.add(Constants.MOVE.LEFT);
+        this.listMove.add(Constants.MOVE.RIGHT);
+        this.listMove.add(Constants.MOVE.DOWN);
+    }
+
+    public Constants.MOVE getRandomAction() {
+        int SIZE = this.listMove.size();
+        Random RANDOM = new Random();
+        return this.listMove.get(RANDOM.nextInt(SIZE));
+    }
+
     private boolean isPathSafe(int [] path) {
         for (Agent ghost: utils.getGhosts()) {
             for (int i: path) {
@@ -39,6 +56,8 @@ public class Action {
                     if (game.getShortestPathDistance(i, ghost.getIndex()) < SAFE_DISTANCE) {
                         return false;
                     }
+                } else {
+                    break;
                 }
             }
         }
@@ -58,86 +77,103 @@ public class Action {
         }
 
         //vai para a pilula mais proxima
-        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / 8)).getIndex(), game.getPacmanLastMoveMade(), myDM);
+        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / PILLS_DIVISOR)).getIndex(), game.getPacmanLastMoveMade(), myDM);
     }
 
     private Constants.MOVE eatPills() {
+        //Vai para Come um EdibleGhost (sem GHOSTS)(
+        Agent ghostEdible = isAnySafeGhostEdible();
+        if (ghostEdible != null) {
+            return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), myDM);
+        }
+
+
+        if (!isAnyGhostInLairTime()) {
+            //Vai para a PowerPill (sem GHOSTS)
+            for (Agent powerPill: utils.getPowerPills()) {
+                int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade());
+                if (isPathSafe(path)) {
+                    return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade(), myDM);
+                }
+            }
+
+        }
 
         //Vai para a pilula (sem GHOSTS)
-        for (int i = utils.getPills().size() - 1; i >= 0; i--) {
-            Agent pill = utils.getPills().get(Math.round(i / 8));
+        for (Agent pill: utils.getPills()) {
             int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), pill.getIndex(), game.getPacmanLastMoveMade());
             if (isPathSafe(path)) {
                 return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), pill.getIndex(), game.getPacmanLastMoveMade(), myDM);
             }
         }
 
-        //Vai para Come um EdibleGhost (sem GHOSTS)(
-        Agent ghostEdible = isAnySafeGhostEdible();
-        if (ghostEdible != null) {
-            return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade(), myDM);
-        }
-        //Vai para a PowerPill (sem GHOSTS)
-        for (Agent powerPill: utils.getPowerPills()) {
-            int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade());
-            if (isPathSafe(path)) {
-                return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade(), myDM);
-            }
-        }
-
-
         //vai para a pilula mais proxima
-        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / 8)).getIndex(), game.getPacmanLastMoveMade(), myDM);
+        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / PILLS_DIVISOR)).getIndex(), game.getPacmanLastMoveMade(), myDM);
     }
 
     private Constants.MOVE eatGhosts() {
         //Vai para Come um EdibleGhost (sem GHOSTS)(
         Agent ghostEdible = isAnySafeGhostEdible();
         if (ghostEdible != null) {
-            return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade(), myDM);
+            return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), myDM);
         }
 
         // Vai para o Edible Ghost mais próximo se estiver seguro (SEM GHOSTS)
         for (Agent edibleGhost: utils.getGhostsEdible()) {
             int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), edibleGhost.getIndex(), game.getPacmanLastMoveMade());
             if (isPathSafe(path)) {
-                return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), edibleGhost.getIndex(), game.getPacmanLastMoveMade(), myDM);
+                return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), edibleGhost.getIndex(), myDM);
             }
         }
 
+        //Vai para a PowerPill (sem GHOSTS)
+        if (!isAnyGhostInLairTime()) {
+            for (Agent powerPill: utils.getPowerPills()) {
+                int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade());
+                if (isPathSafe(path)) {
+                    return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade(), myDM);
+                }
+            }
+        }
 
         //vai para a pilula mais proxima
-        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / 2)).getIndex(), game.getPacmanLastMoveMade(), myDM);
+        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / PILLS_DIVISOR)).getIndex(), game.getPacmanLastMoveMade(), myDM);
     }
 
     private Constants.MOVE explore() {
-        // vai para a power pill mais distante do pacman segura (SEM GHOSTS)
-        for (int i = utils.getPowerPills().size() - 1; i >= 0; i--) {
-            Agent powerPill = utils.getPowerPills().get(Math.round(i / 8));
-            int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade());
-            if (isPathSafe(path)) {
-                return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade(), myDM);
+        //Vai para Come um EdibleGhost (sem GHOSTS)(
+        Agent ghostEdible = isAnySafeGhostEdible();
+        if (ghostEdible != null) {
+            return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), myDM);
+        }
+
+        //Vai para a PowerPill (sem GHOSTS)
+        if (!isAnyGhostInLairTime()) {
+            for (Agent powerPill: utils.getPowerPills()) {
+                int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade());
+                if (isPathSafe(path)) {
+                    return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), powerPill.getIndex(), game.getPacmanLastMoveMade(), myDM);
+                }
             }
         }
 
         // vai para a pill mais distante do pacman segura (SEM GHOSTS)
-        for (int i = utils.getPills().size() - 1; i >= 0; i--) {
-            Agent pill = utils.getPills().get(Math.round(i / 8));
+        for (int i = utils.getPills().size() - 1; i >= 1; i--) {
+            Agent pill = utils.getPills().get(Math.round(i / PILLS_DIVISOR));
             int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), pill.getIndex(), game.getPacmanLastMoveMade());
             if (isPathSafe(path)) {
                 return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), pill.getIndex(), game.getPacmanLastMoveMade(), myDM);
             }
         }
 
-
         //vai para a pilula mais proxima
-        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(utils.getPills().size() - 1).getIndex(), game.getPacmanLastMoveMade(), myDM);
+        return game.getNextMoveTowardsTarget(utils.getPacmanNodeIndex(), utils.getPills().get(Math.round(utils.getPills().size() / PILLS_DIVISOR)).getIndex(), game.getPacmanLastMoveMade(), myDM);
     }
 
     public Agent isAnySafeGhostEdible() {
         for (Agent ghostEdible: utils.getGhostsEdible()) {
-            if (game.getShortestPathDistance(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade()) < RADAR_GHOSTS) {
-                int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), ghostEdible.getIndex(), game.getPacmanLastMoveMade());
+            if (game.getShortestPathDistance(utils.getPacmanNodeIndex(), ghostEdible.getIndex()) < RADAR_GHOSTS) {
+                int [] path = game.getShortestPath(utils.getPacmanNodeIndex(), ghostEdible.getIndex());
                 if (isPathSafe(path)) {
                     return ghostEdible;
                 }
@@ -145,6 +181,16 @@ public class Action {
         }
 
         return null;
+    }
+
+    public boolean isAnyGhostInLairTime() {
+        for (Constants.GHOST ghost: Constants.GHOST.values()) {
+            if (game.getGhostLairTime(ghost) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Constants.MOVE doMove (ACTION act, Game game) {
@@ -162,6 +208,6 @@ public class Action {
             default:
                 return this.runAway();
         }
-
     }
+
 }
